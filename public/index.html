@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File Manager Portal - Server Edition</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 0.95rem;
+        }
+
+        .server-info {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 10px 20px;
+            margin-top: 15px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+        }
+
+        .upload-section {
+            padding: 30px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .upload-area {
+            border: 2px dashed #667eea;
+            border-radius: 8px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .upload-area:hover {
+            border-color: #764ba2;
+            background: #f0f4ff;
+        }
+
+        .upload-area.dragover {
+            border-color: #764ba2;
+            background: #e8f0ff;
+            transform: scale(1.02);
+        }
+
+        .upload-icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            color: #667eea;
+        }
+
+        .upload-area h3 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .upload-area p {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        .files-section {
+            padding: 30px;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .section-header h2 {
+            color: #333;
+            font-size: 1.5rem;
+        }
+
+        .sort-controls {
+            display: flex;
+            gap: 10px;
+        }
+
+        .sort-btn {
+            padding: 8px 16px;
+            border: 1px solid #ddd;
+            background: white;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.2s ease;
+        }
+
+        .sort-btn:hover {
+            background: #f0f0f0;
+        }
+
+        .sort-btn.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .files-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .file-card {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 20px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .file-card:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .file-icon {
+            font-size: 3rem;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+
+        .file-info {
+            margin-bottom: 15px;
+        }
+
+        .file-name {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+            word-break: break-word;
+        }
+
+        .file-meta {
+            font-size: 0.85rem;
+            color: #666;
+            display: flex;
+            justify-content: space-between;
+            margin-top: 5px;
+        }
+
+        .file-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 15px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 8px 12px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.2s ease;
+            font-weight: 500;
+        }
+
+        .btn-download {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-download:hover {
+            background: #5568d3;
+        }
+
+        .btn-edit {
+            background: #ffc107;
+            color: #333;
+        }
+
+        .btn-edit:hover {
+            background: #ffb300;
+        }
+
+        .btn-delete {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-delete:hover {
+            background: #c82333;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+        }
+
+        .empty-state-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-header h3 {
+            color: #333;
+            font-size: 1.3rem;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #999;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .close-btn:hover {
+            color: #333;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            font-family: inherit;
+        }
+
+        .form-group textarea {
+            min-height: 200px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+            padding: 10px 24px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            font-weight: 500;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+            padding: 10px 24px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            font-weight: 500;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 16px 24px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 500;
+            z-index: 2000;
+            animation: slideIn 0.3s ease;
+            max-width: 400px;
+        }
+
+        .notification.success {
+            background: #28a745;
+        }
+
+        .notification.error {
+            background: #dc3545;
+        }
+
+        .notification.info {
+            background: #17a2b8;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .search-box {
+            margin-bottom: 20px;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 0.95rem;
+        }
+
+        .search-box input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #667eea;
+            font-size: 1.2rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Mobile App Test File FTP Portal</h1>
+        </div>
+
+        <div class="upload-section">
+            <div class="upload-area" id="uploadArea">
+                <div class="upload-icon">☁️</div>
+                <h3>Drop files here or click to upload</h3>
+                <p>Files will be stored on the server</p>
+                <input type="file" id="fileInput" multiple>
+            </div>
+        </div>
+
+        <div class="files-section">
+            <div class="section-header">
+                <h2>Server Files</h2>
+                <div class="sort-controls">
+                    <button class="sort-btn active" data-sort="name">Name</button>
+                    <button class="sort-btn" data-sort="date">Date</button>
+                    <button class="sort-btn" data-sort="size">Size</button>
+                </div>
+            </div>
+
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="🔍 Search files...">
+            </div>
+
+            <div class="files-grid" id="filesGrid">
+                <div class="loading">Loading files...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Modal -->
+    <div class="modal" id="editModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Edit File</h3>
+                <button class="close-btn" onclick="closeEditModal()">×</button>
+            </div>
+            <div class="form-group">
+                <label>File Name</label>
+                <input type="text" id="editFileName" placeholder="Enter file name">
+            </div>
+            <div class="form-group">
+                <label>Content (text files only)</label>
+                <textarea id="editFileContent" placeholder="File content..."></textarea>
+            </div>
+            <div class="form-actions">
+                <button class="btn-secondary" onclick="closeEditModal()">Cancel</button>
+                <button class="btn-primary" onclick="saveEdit()">Save Changes</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://10.160.13.110:3080/api';
+        let files = [];
+        let currentSort = 'name';
+        let editingFileName = null;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            loadFiles();
+            setupEventListeners();
+        });
+
+        function setupEventListeners() {
+            const uploadArea = document.getElementById('uploadArea');
+            const fileInput = document.getElementById('fileInput');
+            const searchInput = document.getElementById('searchInput');
+
+            uploadArea.addEventListener('click', () => fileInput.click());
+            fileInput.addEventListener('change', handleFileSelect);
+
+            uploadArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                uploadArea.classList.add('dragover');
+            });
+
+            uploadArea.addEventListener('dragleave', () => {
+                uploadArea.classList.remove('dragover');
+            });
+
+            uploadArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadArea.classList.remove('dragover');
+                handleFileSelect({ target: { files: e.dataTransfer.files } });
+            });
+
+            searchInput.addEventListener('input', (e) => {
+                renderFiles(e.target.value);
+            });
+
+            document.querySelectorAll('.sort-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    currentSort = btn.dataset.sort;
+                    renderFiles();
+                });
+            });
+        }
+
+        async function loadFiles() {
+            try {
+                const response = await fetch(`${API_URL}/files`);
+                files = await response.json();
+                renderFiles();
+            } catch (error) {
+                showNotification('Failed to load files from server', 'error');
+                console.error(error);
+            }
+        }
+
+        async function handleFileSelect(e) {
+            const selectedFiles = Array.from(e.target.files);
+            const formData = new FormData();
+            
+            selectedFiles.forEach(file => {
+                formData.append('files', file);
+            });
+
+            try {
+                const response = await fetch(`${API_URL}/upload`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (response.ok) {
+                    showNotification('Files uploaded successfully!', 'success');
+                    loadFiles();
+                } else {
+                    showNotification('Failed to upload files', 'error');
+                }
+            } catch (error) {
+                showNotification('Failed to upload files', 'error');
+                console.error(error);
+            }
+
+            e.target.value = '';
+        }
+
+        function renderFiles(searchTerm = '') {
+            const grid = document.getElementById('filesGrid');
+            
+            let filteredFiles = files.filter(file => 
+                file.name.toLowerCase().includes(searchTerm.toLowerCase())
+            );
+
+            filteredFiles.sort((a, b) => {
+                switch(currentSort) {
+                    case 'name':
+                        return a.name.localeCompare(b.name);
+                    case 'date':
+                        return new Date(b.uploadDate) - new Date(a.uploadDate);
+                    case 'size':
+                        return b.size - a.size;
+                    default:
+                        return 0;
+                }
+            });
+
+            if (filteredFiles.length === 0) {
+                grid.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📂</div>
+                        <h3>${searchTerm ? 'No files found' : 'No files yet'}</h3>
+                        <p>${searchTerm ? 'Try a different search term' : 'Upload your first file to get started'}</p>
+                    </div>
+                `;
+                return;
+            }
+
+            grid.innerHTML = filteredFiles.map(file => `
+                <div class="file-card">
+                    <div class="file-icon">${getFileIcon(file.name)}</div>
+                    <div class="file-info">
+                        <div class="file-name">${file.name}</div>
+                        <div class="file-meta">
+                            <span>${formatFileSize(file.size)}</span>
+                            <span>${formatDate(file.uploadDate)}</span>
+                        </div>
+                    </div>
+                    <div class="file-actions">
+                        <button class="btn btn-download" onclick="downloadFile('${encodeURIComponent(file.name)}')">Download</button>
+                        <button class="btn btn-edit" onclick="editFile('${encodeURIComponent(file.name)}')">Edit</button>
+                        <button class="btn btn-delete" onclick="deleteFile('${encodeURIComponent(file.name)}')">Delete</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function getFileIcon(filename) {
+            const ext = filename.split('.').pop().toLowerCase();
+            
+            if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(ext)) return '🖼️';
+            if (['mp4', 'avi', 'mov', 'mkv'].includes(ext)) return '🎥';
+            if (['mp3', 'wav', 'ogg', 'flac'].includes(ext)) return '🎵';
+            if (ext === 'pdf') return '📄';
+            if (['txt', 'md', 'log'].includes(ext)) return '📝';
+            if (['zip', 'rar', '7z', 'tar', 'gz'].includes(ext)) return '📦';
+            if (['doc', 'docx'].includes(ext)) return '📘';
+            if (['xls', 'xlsx', 'csv'].includes(ext)) return '📊';
+            if (['ppt', 'pptx'].includes(ext)) return '📑';
+            if (['js', 'html', 'css', 'json', 'py', 'java'].includes(ext)) return '💻';
+            return '📄';
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+        }
+
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            const now = new Date();
+            const diff = now - date;
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            
+            if (days === 0) return 'Today';
+            if (days === 1) return 'Yesterday';
+            if (days < 7) return `${days} days ago`;
+            return date.toLocaleDateString();
+        }
+
+        function downloadFile(filename) {
+            window.open(`${API_URL}/download/${filename}`, '_blank');
+            showNotification('Download started!', 'success');
+        }
+
+        async function editFile(filename) {
+            editingFileName = decodeURIComponent(filename);
+            document.getElementById('editFileName').value = editingFileName;
+
+            // Try to load file content if it's a text file
+            const ext = editingFileName.split('.').pop().toLowerCase();
+            const textExts = ['txt', 'md', 'json', 'html', 'css', 'js', 'py', 'java', 'xml', 'csv', 'log'];
+
+            if (textExts.includes(ext)) {
+                try {
+                    const response = await fetch(`${API_URL}/file/${encodeURIComponent(editingFileName)}`);
+                    const data = await response.json();
+                    document.getElementById('editFileContent').value = data.content;
+                    document.getElementById('editFileContent').disabled = false;
+                } catch (error) {
+                    document.getElementById('editFileContent').value = 'Cannot load file content';
+                    document.getElementById('editFileContent').disabled = true;
+                }
+            } else {
+                document.getElementById('editFileContent').value = 'Cannot edit binary file content';
+                document.getElementById('editFileContent').disabled = true;
+            }
+
+            document.getElementById('editModal').classList.add('show');
+        }
+
+        function closeEditModal() {
+            document.getElementById('editModal').classList.remove('show');
+            editingFileName = null;
+        }
+
+        async function saveEdit() {
+            const newName = document.getElementById('editFileName').value.trim();
+            const newContent = document.getElementById('editFileContent').value;
+
+            if (!newName) {
+                showNotification('Please enter a file name', 'error');
+                return;
+            }
+
+            try {
+                const body = { newName };
+                
+                if (!document.getElementById('editFileContent').disabled) {
+                    body.content = newContent;
+                }
+
+                const response = await fetch(`${API_URL}/file/${encodeURIComponent(editingFileName)}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(body)
+                });
+
+                if (response.ok) {
+                    showNotification('File updated successfully!', 'success');
+                    closeEditModal();
+                    loadFiles();
+                } else {
+                    showNotification('Failed to update file', 'error');
+                }
+            } catch (error) {
+                showNotification('Failed to update file', 'error');
+                console.error(error);
+            }
+        }
+
+        async function deleteFile(filename) {
+            const decodedName = decodeURIComponent(filename);
+            
+            if (!confirm(`Are you sure you want to delete "${decodedName}"?`)) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/file/${filename}`, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    showNotification('File deleted successfully!', 'success');
+                    loadFiles();
+                } else {
+                    showNotification('Failed to delete file', 'error');
+                }
+            } catch (error) {
+                showNotification('Failed to delete file', 'error');
+                console.error(error);
+            }
+        }
+
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+
+            setTimeout(() => {
+                notification.style.animation = 'slideIn 0.3s ease reverse';
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
