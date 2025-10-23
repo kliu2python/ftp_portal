@@ -6,15 +6,25 @@ const fsSync = require('fs');
 const cors = require('cors');
 
 const app = express();
-const PORT = 3080;
+const PORT = process.env.PORT || 3080;
 
-// Configure storage folder - THIS IS YOUR HOST FOLDER
-const UPLOAD_FOLDER = "/home/ljiahao/apks";
+// Configure storage folder - default to host-mounted directory when provided
+const DEFAULT_UPLOAD_FOLDER = path.join(__dirname, 'uploads');
+let uploadFolder = process.env.UPLOAD_FOLDER || '/home/ljiahao/apks';
 
-// Ensure uploads folder exists
-if (!fsSync.existsSync(UPLOAD_FOLDER)) {
-    fsSync.mkdirSync(UPLOAD_FOLDER, { recursive: true });
+try {
+    if (!fsSync.existsSync(uploadFolder)) {
+        fsSync.mkdirSync(uploadFolder, { recursive: true });
+    }
+} catch (error) {
+    console.warn(`Unable to access configured upload folder "${uploadFolder}", falling back to default.`, error);
+    uploadFolder = DEFAULT_UPLOAD_FOLDER;
+    if (!fsSync.existsSync(uploadFolder)) {
+        fsSync.mkdirSync(uploadFolder, { recursive: true });
+    }
 }
+
+const UPLOAD_FOLDER = uploadFolder;
 
 // Configure multer for file uploads
 const storage = multer.diskStorage({
@@ -153,8 +163,8 @@ app.listen(PORT, () => {
 ║   📁 Host Folder: ${UPLOAD_FOLDER}
 ║   🌐 Server: http://localhost:${PORT}      ║
 ║                                            ║
-║   All files are stored in the 'uploads'   ║
-║   folder on your server filesystem        ║
+║   All files are stored at the path above ║
+║   on your server filesystem              ║
 ╚════════════════════════════════════════════╝
     `);
 });
