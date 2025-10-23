@@ -1,0 +1,14 @@
+version: "3.9"
+
+services:
+  ftp_portal:
+    build: .
+    container_name: ftp_portal
+    ports:
+      - "3080:3080"
+    environment:
+      - PORT=3080
+      - UPLOAD_FOLDER=/data/apks
+    volumes:
+      - /home/ljiahao/apks:/data/apks
+    restart: unless-stopped
