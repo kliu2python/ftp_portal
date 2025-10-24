@@ -105,7 +105,22 @@
             display: none;
         }
 
-        label {
+        .control-field {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+            color: #475569;
+        }
+
+        .control-field label {
+            margin: 0;
+            white-space: nowrap;
+            color: inherit;
+            font-size: inherit;
+        }
+
+        .form-group label {
             font-size: 0.9rem;
             color: #475569;
             display: inline-flex;
@@ -205,6 +220,23 @@
             color: #475569;
         }
 
+        .pagination-controls {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .pagination-size {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .pagination-size label {
+            margin: 0;
+            white-space: nowrap;
+        }
+
         .pagination button {
             padding: 0.45rem 0.85rem;
             border-radius: 4px;
@@ -213,6 +245,10 @@
             color: #1f2937;
             cursor: pointer;
             font-size: 0.9rem;
+        }
+
+        .pagination select {
+            min-width: auto;
         }
 
         .pagination button:disabled {
@@ -359,18 +395,18 @@
                 <div class="controls">
                     <button type="button" id="uploadButton">Upload files</button>
                     <input type="file" id="fileInput" multiple>
-                    <label>
-                        Search
+                    <div class="control-field">
+                        <label for="searchInput">Search</label>
                         <input type="text" id="searchInput" placeholder="Type to filter by name">
-                    </label>
-                    <label>
-                        Sort by
+                    </div>
+                    <div class="control-field">
+                        <label for="sortSelect">Sort by</label>
                         <select id="sortSelect">
                             <option value="name">Name</option>
                             <option value="date">Last modified</option>
                             <option value="size">Size</option>
                         </select>
-                    </label>
+                    </div>
                 </div>
             </div>
             <div class="table-wrapper">
@@ -391,9 +427,19 @@
                 </table>
             </div>
             <div class="pagination" id="pagination" hidden>
-                <button id="prevPage" type="button">Previous</button>
-                <span id="paginationStatus">Page 1 of 1</span>
-                <button id="nextPage" type="button">Next</button>
+                <div class="pagination-size" id="pageSizeWrapper">
+                    <label for="pageSizeSelect">Items per page</label>
+                    <select id="pageSizeSelect">
+                        <option value="8">8</option>
+                        <option value="10" selected>10</option>
+                        <option value="15">15</option>
+                    </select>
+                </div>
+                <div class="pagination-controls" id="paginationControls">
+                    <button id="prevPage" type="button">Previous</button>
+                    <span id="paginationStatus">Page 1 of 1</span>
+                    <button id="nextPage" type="button">Next</button>
+                </div>
             </div>
         </section>
     </main>
@@ -425,7 +471,7 @@
             : '';
         const API_URL = baseOrigin ? `${baseOrigin}/api` : '/api';
 
-        const PAGE_SIZE = 10;
+        let pageSize = 10;
         let files = [];
         let currentSort = 'name';
         let currentPage = 1;
@@ -444,6 +490,7 @@
             const sortSelect = document.getElementById('sortSelect');
             const prevPageBtn = document.getElementById('prevPage');
             const nextPageBtn = document.getElementById('nextPage');
+            const pageSizeSelect = document.getElementById('pageSizeSelect');
 
             uploadButton.addEventListener('click', () => fileInput.click());
             fileInput.addEventListener('change', handleFileSelect);
@@ -471,6 +518,18 @@
                 currentPage += 1;
                 renderFiles();
             });
+
+            if (pageSizeSelect) {
+                pageSizeSelect.value = String(pageSize);
+                pageSizeSelect.addEventListener('change', (event) => {
+                    const newSize = Number(event.target.value);
+                    if (!Number.isNaN(newSize) && newSize > 0) {
+                        pageSize = newSize;
+                        currentPage = 1;
+                        renderFiles();
+                    }
+                });
+            }
         }
 
         async function loadFiles() {
@@ -521,6 +580,8 @@
             const paginationStatus = document.getElementById('paginationStatus');
             const prevPageBtn = document.getElementById('prevPage');
             const nextPageBtn = document.getElementById('nextPage');
+            const pageSizeSelect = document.getElementById('pageSizeSelect');
+            const pageSizeWrapper = document.getElementById('pageSizeWrapper');
 
             const filtered = files
                 .filter(file => file.name.toLowerCase().includes(searchQuery))
@@ -543,18 +604,25 @@
                 return;
             }
 
-            const totalPages = Math.max(1, Math.ceil(totalFiles / PAGE_SIZE));
+            if (pageSizeSelect) {
+                pageSizeSelect.value = String(pageSize);
+            }
+            if (pageSizeWrapper) {
+                pageSizeWrapper.hidden = false;
+            }
+
+            const totalPages = Math.max(1, Math.ceil(totalFiles / pageSize));
             currentPage = Math.min(currentPage, totalPages);
 
-            const startIndex = (currentPage - 1) * PAGE_SIZE;
-            const paginated = filtered.slice(startIndex, startIndex + PAGE_SIZE);
+            const startIndex = (currentPage - 1) * pageSize;
+            const paginated = filtered.slice(startIndex, startIndex + pageSize);
 
             tableBody.innerHTML = paginated.map(file => renderRow(file)).join('');
 
             paginationStatus.textContent = `Page ${currentPage} of ${totalPages}`;
             prevPageBtn.disabled = currentPage === 1;
             nextPageBtn.disabled = currentPage === totalPages;
-            pagination.hidden = totalPages <= 1;
+            pagination.hidden = false;
         }
 
         function renderRow(file) {
