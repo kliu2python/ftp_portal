@@ -7,206 +7,462 @@
     <style>
         :root {
             color-scheme: light;
+            --surface: rgba(255, 255, 255, 0.82);
+            --surface-strong: rgba(255, 255, 255, 0.92);
+            --border: rgba(15, 23, 42, 0.08);
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --danger: #ef4444;
+            --danger-strong: #b91c1c;
+            --text: #0f172a;
+            --muted: #475569;
+            --radius-lg: 18px;
+            --radius-md: 14px;
+            --radius-sm: 10px;
+            font-synthesis: none;
+            text-rendering: optimizeLegibility;
         }
 
-        * {
+        *, *::before, *::after {
             box-sizing: border-box;
         }
 
         body {
             margin: 0;
             font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-            background: #f4f6f8;
-            color: #1f2933;
+            color: var(--text);
+            background: radial-gradient(circle at 0% -20%, #dbeafe 0%, #f8fafc 55%, #eef2ff 100%);
             min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        body::before,
+        body::after {
+            content: '';
+            position: fixed;
+            inset: auto;
+            width: 420px;
+            height: 420px;
+            border-radius: 50%;
+            filter: blur(120px);
+            opacity: 0.6;
+            z-index: 0;
+        }
+
+        body::before {
+            background: radial-gradient(circle at center, rgba(59, 130, 246, 0.35), rgba(59, 130, 246, 0));
+            top: -160px;
+            right: -120px;
+        }
+
+        body::after {
+            background: radial-gradient(circle at center, rgba(129, 140, 248, 0.4), rgba(129, 140, 248, 0));
+            bottom: -220px;
+            left: -120px;
         }
 
         main {
-            width: 100%;
-            margin: 0;
-            padding: 2rem 3rem 2.75rem;
+            position: relative;
+            z-index: 1;
+            max-width: min(1100px, 100% - 3rem);
+            margin: 0 auto;
+            padding: 3.5rem 1.5rem 4.5rem;
             display: flex;
             flex-direction: column;
-            min-height: 100vh;
+            gap: 2.5rem;
         }
 
-        .section {
-            background: #ffffff;
-            border: 1px solid #d8dee6;
-            border-radius: 8px;
-            padding: 1.25rem;
-            box-shadow: 0 6px 12px rgba(15, 23, 42, 0.08);
+        header.hero {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0.6));
+            border-radius: var(--radius-lg);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            box-shadow: 0 35px 60px rgba(15, 23, 42, 0.15);
+            padding: 2.5rem;
             display: flex;
             flex-direction: column;
-            flex: 1 1 auto;
-            min-height: 0;
+            gap: 2rem;
+            position: relative;
+            overflow: hidden;
+            backdrop-filter: blur(24px);
         }
 
-        .table-wrapper {
-            overflow: auto;
-            flex: 1 1 auto;
-            min-height: 0;
+        header.hero::after {
+            content: '';
+            position: absolute;
+            inset: -60% -20% auto auto;
+            width: 320px;
+            height: 320px;
+            background: radial-gradient(circle at center, rgba(37, 99, 235, 0.18), rgba(37, 99, 235, 0));
+            transform: rotate(15deg);
+            opacity: 0.9;
         }
 
-        .section h2 {
-            margin: 0 0 0.75rem;
-            font-size: 1.25rem;
-            font-weight: 600;
+        header.hero > * {
+            position: relative;
+            z-index: 1;
         }
 
-        .section p {
-            margin: 0 0 0.85rem;
-            color: #475569;
+        .hero-content {
+            display: grid;
+            gap: 2rem;
         }
 
-        .files-toolbar {
+        .hero-text {
+            max-width: 520px;
             display: flex;
-            flex-wrap: wrap;
-            justify-content: space-between;
-            gap: 0.75rem;
-            align-items: center;
-            margin-bottom: 0.75rem;
+            flex-direction: column;
+            gap: 1rem;
         }
 
-        .files-toolbar h2 {
-            margin: 0;
-        }
-
-        .toolbar-meta {
-            font-size: 0.9rem;
-            color: #64748b;
-            margin-top: 0.35rem;
-        }
-
-        .controls {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 0.75rem;
-            align-items: center;
-        }
-
-        .controls button {
-            border: 1px solid #2563eb;
-            background: #2563eb;
-            color: #ffffff;
-            padding: 0.45rem 0.9rem;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 0.9rem;
-            transition: background-color 0.2s ease, border-color 0.2s ease;
-        }
-
-        .controls button:hover {
-            background: #1d4ed8;
-            border-color: #1d4ed8;
-        }
-
-        .controls input[type="file"] {
-            display: none;
-        }
-
-        .control-field {
+        .hero-badge {
             display: inline-flex;
             align-items: center;
             gap: 0.5rem;
-            font-size: 0.9rem;
-            color: #475569;
+            padding: 0.4rem 1rem;
+            background: rgba(59, 130, 246, 0.12);
+            color: var(--primary);
+            border-radius: 999px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
         }
 
-        .control-field label {
+        .hero-badge::before {
+            content: '';
+            width: 0.5rem;
+            height: 0.5rem;
+            background: var(--primary);
+            border-radius: 50%;
+            box-shadow: 0 0 0 6px rgba(37, 99, 235, 0.2);
+        }
+
+        .hero-text h1 {
             margin: 0;
-            white-space: nowrap;
-            color: inherit;
-            font-size: inherit;
+            font-size: clamp(2rem, 4vw, 2.8rem);
+            font-weight: 700;
+            letter-spacing: -0.02em;
         }
 
-        .form-group label {
-            font-size: 0.9rem;
-            color: #475569;
-            display: inline-flex;
+        .hero-text p {
+            margin: 0;
+            color: rgba(15, 23, 42, 0.78);
+            font-size: 1.05rem;
+            line-height: 1.6;
+        }
+
+        .hero-stats {
+            display: grid;
+            gap: 1rem;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.55);
+            border-radius: var(--radius-md);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            padding: 1.2rem 1.4rem;
+            display: flex;
             flex-direction: column;
-            gap: 0.25rem;
+            gap: 0.4rem;
+            min-width: 0;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4);
         }
 
-        input[type="text"],
-        select {
-            border: 1px solid #cbd5f5;
-            border-radius: 4px;
-            padding: 0.4rem 0.65rem;
-            font-size: 0.95rem;
-            min-width: 180px;
+        .stat-card.primary {
+            background: linear-gradient(135deg, rgba(37, 99, 235, 0.18), rgba(37, 99, 235, 0.05));
+            border: 1px solid rgba(37, 99, 235, 0.28);
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: rgba(15, 23, 42, 0.5);
+        }
+
+        .stat-value {
+            font-size: 1.6rem;
+            font-weight: 700;
+            letter-spacing: -0.01em;
+        }
+
+        .stat-subtext {
+            font-size: 0.9rem;
+            color: rgba(15, 23, 42, 0.6);
+        }
+
+        .status-pill {
+            align-self: flex-start;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.45rem;
+            padding: 0.3rem 0.9rem;
+            border-radius: 999px;
+            background: rgba(16, 185, 129, 0.16);
+            color: #047857;
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+
+        .status-pill::before {
+            content: '';
+            width: 0.55rem;
+            height: 0.55rem;
+            border-radius: 50%;
+            background: #10b981;
+            box-shadow: 0 0 0 5px rgba(16, 185, 129, 0.25);
+        }
+
+        .hero-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        button {
+            font: inherit;
+            cursor: pointer;
+        }
+
+        .primary-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            background: linear-gradient(135deg, #2563eb, #4f46e5);
+            color: #ffffff;
+            border: none;
+            border-radius: 999px;
+            padding: 0.85rem 1.8rem;
+            font-weight: 600;
+            letter-spacing: 0.01em;
+            box-shadow: 0 25px 35px rgba(59, 130, 246, 0.35);
+            transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
+        }
+
+        .primary-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 30px 45px rgba(37, 99, 235, 0.35);
+            filter: brightness(1.02);
+        }
+
+        .primary-btn:focus-visible {
+            outline: 3px solid rgba(37, 99, 235, 0.45);
+            outline-offset: 3px;
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        .hero-hint {
+            margin: 0;
+            font-size: 0.9rem;
+            color: rgba(15, 23, 42, 0.6);
+        }
+
+        section.panel {
+            background: var(--surface);
+            border-radius: var(--radius-lg);
+            padding: 2.25rem;
+            border: 1px solid rgba(255, 255, 255, 0.55);
+            box-shadow: 0 30px 60px rgba(15, 23, 42, 0.12);
+            display: flex;
+            flex-direction: column;
+            gap: 1.75rem;
+            backdrop-filter: blur(18px);
+        }
+
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+        }
+
+        .panel-title h2 {
+            margin: 0;
+            font-size: 1.5rem;
+            font-weight: 600;
+            letter-spacing: -0.01em;
+        }
+
+        .panel-title p {
+            margin: 0.45rem 0 0;
+            color: rgba(15, 23, 42, 0.65);
+            max-width: 460px;
+            line-height: 1.6;
+        }
+
+        .panel-controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1rem;
+            align-items: end;
+            min-width: 240px;
+        }
+
+        .input-field {
+            display: flex;
+            flex-direction: column;
+            gap: 0.45rem;
+            font-size: 0.9rem;
+            color: var(--muted);
+        }
+
+        .input-shell,
+        .select-shell {
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.65rem 0.9rem;
+            border-radius: var(--radius-sm);
+            background: var(--surface-strong);
+            box-shadow: inset 0 0 0 1px var(--border);
+        }
+
+        .input-shell svg {
+            width: 1rem;
+            height: 1rem;
+            color: rgba(15, 23, 42, 0.45);
+            flex-shrink: 0;
+        }
+
+        .input-shell input,
+        .select-shell select {
+            border: none;
+            background: none;
+            font: inherit;
+            color: var(--text);
+            width: 100%;
+        }
+
+        .input-shell input::placeholder {
+            color: rgba(100, 116, 139, 0.7);
+        }
+
+        .input-shell input:focus,
+        .select-shell select:focus {
+            outline: none;
+        }
+
+        .select-shell {
+            padding-right: 2.5rem;
+        }
+
+        .select-shell::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            right: 1rem;
+            width: 0;
+            height: 0;
+            border-left: 6px solid transparent;
+            border-right: 6px solid transparent;
+            border-top: 6px solid rgba(71, 85, 105, 0.8);
+            transform: translateY(-30%);
+            pointer-events: none;
+        }
+
+        .table-wrapper {
+            background: var(--surface-strong);
+            border-radius: var(--radius-md);
+            overflow: hidden;
+            border: 1px solid rgba(15, 23, 42, 0.06);
+            box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
         }
 
         table {
             width: 100%;
             border-collapse: collapse;
-            table-layout: fixed;
+            min-width: 680px;
         }
 
         thead {
-            background: #f1f5f9;
+            background: linear-gradient(135deg, rgba(37, 99, 235, 0.16), rgba(14, 165, 233, 0.12));
         }
 
         th,
         td {
-            padding: 0.5rem 0.75rem;
             text-align: left;
-            border-bottom: 1px solid #e2e8f0;
+            padding: 0.85rem 1rem;
             font-size: 0.95rem;
-            vertical-align: middle;
+            color: rgba(15, 23, 42, 0.85);
+            border-bottom: 1px solid rgba(15, 23, 42, 0.06);
             white-space: nowrap;
         }
 
-        tbody td:first-child,
-        thead th:first-child {
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-
-        tbody td:first-child {
-            max-width: 320px;
+        th {
+            font-size: 0.8rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: rgba(15, 23, 42, 0.6);
         }
 
         tbody tr:hover {
-            background: #f8fafc;
+            background: rgba(37, 99, 235, 0.08);
+        }
+
+        tbody td:first-child {
+            font-weight: 600;
+            color: var(--text);
+            max-width: 340px;
+            text-overflow: ellipsis;
+            overflow: hidden;
         }
 
         .actions {
             display: inline-flex;
             flex-wrap: nowrap;
-            gap: 0.35rem;
+            gap: 0.45rem;
         }
 
         .action-btn {
-            border: 1px solid #cbd5f5;
-            background: #ffffff;
-            color: #1f2937;
-            padding: 0.3rem 0.65rem;
-            border-radius: 4px;
-            cursor: pointer;
+            border: none;
+            background: rgba(37, 99, 235, 0.12);
+            color: var(--primary);
+            padding: 0.4rem 0.85rem;
+            border-radius: 999px;
             font-size: 0.82rem;
-            transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
-        }
-
-        .action-btn.primary {
-            border-color: #2563eb;
-            color: #1d4ed8;
-        }
-
-        .action-btn.danger {
-            border-color: #f87171;
-            color: #b91c1c;
+            font-weight: 600;
+            letter-spacing: 0.01em;
+            transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
         }
 
         .action-btn:hover {
-            background: #eef2ff;
+            transform: translateY(-1px);
+            box-shadow: 0 8px 16px rgba(37, 99, 235, 0.25);
+            background: rgba(37, 99, 235, 0.18);
+        }
+
+        .action-btn.primary {
+            background: var(--primary);
+            color: #ffffff;
+        }
+
+        .action-btn.primary:hover {
+            background: var(--primary-dark);
+            box-shadow: 0 10px 20px rgba(37, 99, 235, 0.3);
+        }
+
+        .action-btn.danger {
+            background: rgba(239, 68, 68, 0.12);
+            color: var(--danger-strong);
+        }
+
+        .action-btn.danger:hover {
+            background: rgba(239, 68, 68, 0.18);
+            box-shadow: 0 10px 20px rgba(239, 68, 68, 0.22);
         }
 
         .empty-row {
             text-align: center;
-            padding: 2rem 0;
-            color: #64748b;
+            padding: 2.5rem 0;
+            color: rgba(71, 85, 105, 0.85);
         }
 
         .pagination {
@@ -215,81 +471,94 @@
             align-items: center;
             flex-wrap: wrap;
             gap: 1rem;
-            margin-top: 1rem;
-            font-size: 0.9rem;
-            color: #475569;
+            padding: 1rem 1.25rem;
+            border-radius: var(--radius-md);
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid rgba(15, 23, 42, 0.08);
+            box-shadow: 0 18px 38px rgba(15, 23, 42, 0.12);
         }
 
         .pagination-controls {
             display: inline-flex;
             align-items: center;
-            gap: 0.75rem;
-        }
-
-        .pagination-size {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .pagination-size label {
-            margin: 0;
-            white-space: nowrap;
-        }
-
-        .pagination button {
-            padding: 0.45rem 0.85rem;
-            border-radius: 4px;
-            border: 1px solid #cbd5f5;
-            background: #ffffff;
-            color: #1f2937;
-            cursor: pointer;
+            gap: 0.85rem;
             font-size: 0.9rem;
         }
 
-        .pagination select {
-            min-width: auto;
+        .pagination button {
+            border: none;
+            background: var(--primary);
+            color: #ffffff;
+            padding: 0.45rem 1.1rem;
+            border-radius: 999px;
+            font-weight: 600;
+            transition: background 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .pagination button:hover:not(:disabled) {
+            background: var(--primary-dark);
+            box-shadow: 0 12px 24px rgba(37, 99, 235, 0.25);
         }
 
         .pagination button:disabled {
             opacity: 0.45;
             cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        .pagination-size {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 0.9rem;
+            color: var(--muted);
+        }
+
+        .pagination-size select {
+            border: none;
+            border-radius: 999px;
+            padding: 0.35rem 1.8rem 0.35rem 0.85rem;
+            background: var(--surface-strong);
+            box-shadow: inset 0 0 0 1px var(--border);
+            font: inherit;
         }
 
         .notification {
             position: fixed;
             bottom: 1.5rem;
             right: 1.5rem;
-            background: #1f2933;
+            padding: 0.85rem 1.25rem;
+            border-radius: var(--radius-sm);
+            background: rgba(15, 23, 42, 0.85);
             color: #ffffff;
-            padding: 0.85rem 1.1rem;
-            border-radius: 6px;
-            box-shadow: 0 12px 24px rgba(15, 23, 42, 0.3);
+            box-shadow: 0 20px 40px rgba(15, 23, 42, 0.35);
+            backdrop-filter: blur(12px);
             z-index: 1000;
             transition: opacity 0.3s ease, transform 0.3s ease;
         }
 
         .notification.success {
-            background: #15803d;
+            background: rgba(22, 163, 74, 0.92);
         }
 
         .notification.error {
-            background: #b91c1c;
+            background: rgba(220, 38, 38, 0.92);
         }
 
         .notification.hide {
             opacity: 0;
-            transform: translateY(8px);
+            transform: translateY(12px);
         }
 
         .modal {
             position: fixed;
             inset: 0;
-            background: rgba(15, 23, 42, 0.45);
             display: none;
             align-items: center;
             justify-content: center;
             padding: 1.5rem;
+            background: rgba(15, 23, 42, 0.45);
+            backdrop-filter: blur(4px);
             z-index: 900;
         }
 
@@ -298,51 +567,58 @@
         }
 
         .modal-content {
-            background: #ffffff;
-            width: min(480px, 100%);
-            padding: 1.5rem;
-            border-radius: 8px;
-            box-shadow: 0 12px 30px rgba(15, 23, 42, 0.35);
+            background: rgba(255, 255, 255, 0.94);
+            width: min(500px, 100%);
+            padding: 1.75rem;
+            border-radius: var(--radius-md);
+            box-shadow: 0 30px 55px rgba(15, 23, 42, 0.35);
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
         }
 
         .modal-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 1rem;
         }
 
         .modal-header h3 {
             margin: 0;
-            font-size: 1.15rem;
+            font-size: 1.3rem;
+            font-weight: 600;
         }
 
         .close-btn {
             border: none;
             background: none;
-            font-size: 1.5rem;
+            font-size: 1.75rem;
+            color: rgba(71, 85, 105, 0.8);
             cursor: pointer;
-            color: #475569;
         }
 
         .form-group {
             display: flex;
             flex-direction: column;
-            gap: 0.35rem;
-            margin-bottom: 1rem;
+            gap: 0.45rem;
+        }
+
+        .form-group label {
+            font-size: 0.9rem;
+            color: var(--muted);
         }
 
         .form-group input,
         .form-group textarea {
-            border: 1px solid #cbd5f5;
-            border-radius: 4px;
-            padding: 0.5rem 0.75rem;
+            border: 1px solid rgba(148, 163, 184, 0.4);
+            border-radius: var(--radius-sm);
+            padding: 0.6rem 0.75rem;
             font: inherit;
-            font-size: 0.95rem;
+            background: rgba(255, 255, 255, 0.95);
         }
 
         .form-group textarea {
-            min-height: 160px;
+            min-height: 180px;
             resize: vertical;
         }
 
@@ -354,59 +630,148 @@
 
         .btn-secondary,
         .btn-primary {
-            padding: 0.55rem 1.1rem;
-            border-radius: 4px;
+            border-radius: 999px;
             border: none;
-            cursor: pointer;
-            font-size: 0.95rem;
+            padding: 0.55rem 1.2rem;
+            font-weight: 600;
         }
 
         .btn-secondary {
-            background: #e2e8f0;
-            color: #1f2937;
+            background: rgba(148, 163, 184, 0.22);
+            color: var(--muted);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(148, 163, 184, 0.35);
         }
 
         .btn-primary {
-            background: #2563eb;
+            background: var(--primary);
             color: #ffffff;
         }
 
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            box-shadow: 0 12px 24px rgba(37, 99, 235, 0.3);
+        }
+
+        @media (min-width: 720px) {
+            .hero-content {
+                grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+                align-items: stretch;
+            }
+
+            .hero-stats {
+                align-self: center;
+            }
+        }
+
+        @media (max-width: 900px) {
+            .panel-header {
+                flex-direction: column;
+                align-items: stretch;
+            }
+        }
+
+        @media (max-width: 720px) {
+            header.hero {
+                padding: 2rem;
+            }
+
+            section.panel {
+                padding: 2rem 1.5rem;
+            }
+
+            table {
+                min-width: 600px;
+            }
+        }
+
         @media (max-width: 600px) {
-            .controls {
+            main {
+                max-width: 100%;
+                padding: 2.75rem 1rem 3.5rem;
+            }
+
+            .primary-btn {
+                width: 100%;
+            }
+
+            .hero-text {
+                gap: 0.75rem;
+            }
+
+            .panel-controls {
+                grid-template-columns: 1fr;
+            }
+
+            .pagination {
                 flex-direction: column;
                 align-items: stretch;
             }
 
-            input[type="text"],
-            select {
-                min-width: 100%;
+            .pagination-controls {
+                justify-content: space-between;
+                width: 100%;
             }
         }
     </style>
 </head>
 <body>
     <main>
-        <section class="section">
-            <div class="files-toolbar">
-                <div>
-                    <h2>Server files</h2>
-                    <div class="toolbar-meta" id="fileCount">0 files</div>
+        <header class="hero">
+            <div class="hero-content">
+                <div class="hero-text">
+                    <span class="hero-badge">Storage workspace</span>
+                    <h1>FTP Portal</h1>
+                    <p>Upload, review, and maintain your server-side files through a refreshed cloud-inspired console.</p>
                 </div>
-                <div class="controls">
-                    <button type="button" id="uploadButton">Upload files</button>
-                    <input type="file" id="fileInput" multiple>
-                    <div class="control-field">
-                        <label for="searchInput">Search</label>
-                        <input type="text" id="searchInput" placeholder="Type to filter by name">
+                <div class="hero-stats">
+                    <div class="stat-card primary">
+                        <span class="stat-label">Stored files</span>
+                        <span class="stat-value" id="fileCount">0 files</span>
+                        <span class="stat-subtext">Synced with remote host</span>
                     </div>
-                    <div class="control-field">
-                        <label for="sortSelect">Sort by</label>
-                        <select id="sortSelect">
-                            <option value="name">Name</option>
-                            <option value="date">Last modified</option>
-                            <option value="size">Size</option>
-                        </select>
+                    <div class="stat-card">
+                        <span class="stat-label">Environment</span>
+                        <span class="stat-value">Live node</span>
+                        <span class="stat-subtext status-pill">Online</span>
                     </div>
+                </div>
+            </div>
+            <div class="hero-actions">
+                <button type="button" class="primary-btn" id="uploadButton">Upload files</button>
+                <input type="file" id="fileInput" multiple>
+                <p class="hero-hint">Drag files into the selector or choose multiple items to upload securely in one go.</p>
+            </div>
+        </header>
+
+        <section class="panel">
+            <div class="panel-header">
+                <div class="panel-title">
+                    <h2>Server repository</h2>
+                    <p>Search, sort, and take action on everything stored on the remote filesystem.</p>
+                </div>
+                <div class="panel-controls">
+                    <label class="input-field">
+                        <span>Search</span>
+                        <div class="input-shell">
+                            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                                <path fill="currentColor" d="M15.5 14h-.79l-.28-.27a6 6 0 1 0-.71.71l.27.28v.79l4.25 4.25a1 1 0 0 0 1.41-1.41L15.5 14zm-5.5 0a4.5 4.5 0 1 1 0-9 4.5 4.5 0 0 1 0 9z" />
+                            </svg>
+                            <input type="text" id="searchInput" placeholder="Find a filename...">
+                        </div>
+                    </label>
+                    <label class="input-field">
+                        <span>Sort by</span>
+                        <div class="select-shell">
+                            <select id="sortSelect">
+                                <option value="name">Name</option>
+                                <option value="date">Last modified</option>
+                                <option value="size">Size</option>
+                            </select>
+                        </div>
+                    </label>
                 </div>
             </div>
             <div class="table-wrapper">
@@ -599,52 +964,58 @@
             countLabel.textContent = `${totalFiles} file${totalFiles === 1 ? '' : 's'}`;
 
             if (!totalFiles) {
-                tableBody.innerHTML = '<tr><td class="empty-row" colspan="4">No files found.</td></tr>';
+                tableBody.innerHTML = '<tr><td class="empty-row" colspan="4">No files found. Upload something new to get started.</td></tr>';
                 pagination.hidden = true;
                 return;
             }
 
-            if (pageSizeSelect) {
-                pageSizeSelect.value = String(pageSize);
-            }
-            if (pageSizeWrapper) {
-                pageSizeWrapper.hidden = false;
-            }
-
-            const totalPages = Math.max(1, Math.ceil(totalFiles / pageSize));
+            const totalPages = Math.ceil(totalFiles / pageSize);
             currentPage = Math.min(currentPage, totalPages);
 
             const startIndex = (currentPage - 1) * pageSize;
-            const paginated = filtered.slice(startIndex, startIndex + pageSize);
+            const pageItems = filtered.slice(startIndex, startIndex + pageSize);
 
-            tableBody.innerHTML = paginated.map(file => renderRow(file)).join('');
+            tableBody.innerHTML = pageItems.map(file => {
+                const encodedName = encodeURIComponent(file.name);
+                return `
+                    <tr>
+                        <td title="${file.name}">${file.name}</td>
+                        <td>${formatFileSize(file.size)}</td>
+                        <td>${formatFullDate(file.uploadDate)}</td>
+                        <td>
+                            <div class="actions">
+                                <button class="action-btn primary" type="button" onclick="downloadFile('${encodedName}')">Download</button>
+                                <button class="action-btn" type="button" onclick="editFile('${encodedName}')">Rename / edit</button>
+                                <button class="action-btn danger" type="button" onclick="deleteFile('${encodedName}')">Delete</button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
 
+            pagination.hidden = totalPages <= 1;
             paginationStatus.textContent = `Page ${currentPage} of ${totalPages}`;
-            prevPageBtn.disabled = currentPage === 1;
-            nextPageBtn.disabled = currentPage === totalPages;
-            pagination.hidden = false;
-        }
+            prevPageBtn.disabled = currentPage <= 1;
+            nextPageBtn.disabled = currentPage >= totalPages;
 
-        function renderRow(file) {
-            const encodedName = encodeURIComponent(file.name);
-            return `
-                <tr>
-                    <td>${file.name}</td>
-                    <td>${formatFileSize(file.size)}</td>
-                    <td>${formatFullDate(file.uploadDate)}</td>
-                    <td>
-                        <div class="actions">
-                            <button class="action-btn primary" type="button" onclick="downloadFile('${encodedName}')">Download</button>
-                            <button class="action-btn" type="button" onclick="editFile('${encodedName}')">Rename / edit</button>
-                            <button class="action-btn danger" type="button" onclick="deleteFile('${encodedName}')">Delete</button>
-                        </div>
-                    </td>
-                </tr>
-            `;
+            if (pageSizeSelect) {
+                pageSizeSelect.value = String(pageSize);
+            }
+
+            if (pageSizeWrapper) {
+                pageSizeWrapper.hidden = totalFiles <= 8;
+            }
         }
 
         function formatFileSize(bytes) {
-            if (bytes === 0) return '0 B';
+            if (!bytes && bytes !== 0) {
+                return '—';
+            }
+
+            if (bytes < 1024) {
+                return `${bytes} B`;
+            }
+
             const units = ['B', 'KB', 'MB', 'GB', 'TB'];
             const i = Math.floor(Math.log(bytes) / Math.log(1024));
             const size = bytes / Math.pow(1024, i);
