@@ -853,7 +853,7 @@
 
                 document.getElementById('qrFilename').textContent = decodedName;
                 const qrImage = document.getElementById('qrImage');
-                qrImage.src = data.qrUrl;
+                qrImage.src = data.qrDataUrl;
                 qrImage.alt = `QR code for ${decodedName}`;
                 const linkField = document.getElementById('qrDownloadLink');
                 linkField.value = data.downloadUrl;

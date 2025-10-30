@@ -5,7 +5,7 @@ const fs = require('fs').promises;
 const fsSync = require('fs');
 const cors = require('cors');
 
-const GOOGLE_QR_ENDPOINT = 'https://chart.googleapis.com/chart';
+const { generateQrDataUrl } = require('./utils/qr-generator');
 
 const app = express();
 const PORT = process.env.PORT || 3080;
@@ -113,16 +113,22 @@ app.get('/api/qr/:filename', async (req, res) => {
 
         const baseUrl = `${req.protocol}://${req.get('host')}`;
         const downloadUrl = `${baseUrl}/uploads/${encodeURIComponent(filename)}`;
-        const qrUrl = `${GOOGLE_QR_ENDPOINT}?chs=320x320&cht=qr&choe=UTF-8&chl=${encodeURIComponent(downloadUrl)}`;
+        const qrDataUrl = generateQrDataUrl(downloadUrl, {
+            errorCorrectionLevel: 'M',
+            moduleScale: 8,
+            margin: 2
+        });
 
         res.json({
             filename,
             downloadUrl,
-            qrUrl
+            qrDataUrl
         });
     } catch (error) {
         if (error.code === 'ENOENT') {
             res.status(404).json({ error: 'File not found' });
+        } else if (error.message && error.message.includes('Data too long')) {
+            res.status(422).json({ error: 'Download link is too long to encode as a QR code' });
         } else {
             res.status(500).json({ error: 'Unable to generate QR code' });
         }
