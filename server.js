@@ -5,6 +5,8 @@ const fs = require('fs').promises;
 const fsSync = require('fs');
 const cors = require('cors');
 
+const GOOGLE_QR_ENDPOINT = 'https://chart.googleapis.com/chart';
+
 const app = express();
 const PORT = process.env.PORT || 3080;
 
@@ -93,12 +95,38 @@ app.post('/api/upload', upload.array('files'), (req, res) => {
 app.get('/api/download/:filename', (req, res) => {
     const filename = req.params.filename;
     const filePath = path.join(UPLOAD_FOLDER, filename);
-    
+
     res.download(filePath, filename, (err) => {
         if (err) {
             res.status(404).json({ error: 'File not found' });
         }
     });
+});
+
+// Generate QR code link for a file
+app.get('/api/qr/:filename', async (req, res) => {
+    try {
+        const filename = path.basename(req.params.filename);
+        const filePath = path.join(UPLOAD_FOLDER, filename);
+
+        await fs.access(filePath);
+
+        const baseUrl = `${req.protocol}://${req.get('host')}`;
+        const downloadUrl = `${baseUrl}/uploads/${encodeURIComponent(filename)}`;
+        const qrUrl = `${GOOGLE_QR_ENDPOINT}?chs=320x320&cht=qr&choe=UTF-8&chl=${encodeURIComponent(downloadUrl)}`;
+
+        res.json({
+            filename,
+            downloadUrl,
+            qrUrl
+        });
+    } catch (error) {
+        if (error.code === 'ENOENT') {
+            res.status(404).json({ error: 'File not found' });
+        } else {
+            res.status(500).json({ error: 'Unable to generate QR code' });
+        }
+    }
 });
 
 // Read file content (for editing text files)
