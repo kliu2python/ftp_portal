@@ -5,6 +5,8 @@ const fs = require('fs').promises;
 const fsSync = require('fs');
 const cors = require('cors');
 
+const { generateQrDataUrl } = require('./utils/qr-generator');
+
 const app = express();
 const PORT = process.env.PORT || 3080;
 
@@ -93,12 +95,44 @@ app.post('/api/upload', upload.array('files'), (req, res) => {
 app.get('/api/download/:filename', (req, res) => {
     const filename = req.params.filename;
     const filePath = path.join(UPLOAD_FOLDER, filename);
-    
+
     res.download(filePath, filename, (err) => {
         if (err) {
             res.status(404).json({ error: 'File not found' });
         }
     });
+});
+
+// Generate QR code link for a file
+app.get('/api/qr/:filename', async (req, res) => {
+    try {
+        const filename = path.basename(req.params.filename);
+        const filePath = path.join(UPLOAD_FOLDER, filename);
+
+        await fs.access(filePath);
+
+        const baseUrl = `${req.protocol}://${req.get('host')}`;
+        const downloadUrl = `${baseUrl}/uploads/${encodeURIComponent(filename)}`;
+        const qrDataUrl = generateQrDataUrl(downloadUrl, {
+            errorCorrectionLevel: 'M',
+            moduleScale: 8,
+            margin: 2
+        });
+
+        res.json({
+            filename,
+            downloadUrl,
+            qrDataUrl
+        });
+    } catch (error) {
+        if (error.code === 'ENOENT') {
+            res.status(404).json({ error: 'File not found' });
+        } else if (error.message && error.message.includes('Data too long')) {
+            res.status(422).json({ error: 'Download link is too long to encode as a QR code' });
+        } else {
+            res.status(500).json({ error: 'Unable to generate QR code' });
+        }
+    }
 });
 
 // Read file content (for editing text files)

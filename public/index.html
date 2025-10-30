@@ -305,6 +305,63 @@
             box-shadow: 0 12px 30px rgba(15, 23, 42, 0.35);
         }
 
+        .qr-modal {
+            width: min(420px, 100%);
+        }
+
+        .qr-preview {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+            text-align: center;
+        }
+
+        .qr-preview img {
+            width: 240px;
+            height: 240px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 0.75rem;
+            background: #f8fafc;
+        }
+
+        .qr-filename {
+            font-weight: 600;
+            color: #1f2937;
+        }
+
+        .qr-link {
+            width: 100%;
+            display: flex;
+            gap: 0.5rem;
+            flex-direction: column;
+        }
+
+        .qr-link input {
+            width: 100%;
+            border: 1px solid #cbd5f5;
+            border-radius: 4px;
+            padding: 0.5rem 0.75rem;
+            font: inherit;
+        }
+
+        .qr-link button {
+            align-self: center;
+            border: 1px solid #2563eb;
+            background: #2563eb;
+            color: #ffffff;
+            padding: 0.45rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+
+        .qr-link button:hover {
+            background: #1d4ed8;
+            border-color: #1d4ed8;
+        }
+
         .modal-header {
             display: flex;
             justify-content: space-between;
@@ -461,6 +518,23 @@
             <div class="form-actions">
                 <button class="btn-secondary" type="button" onclick="closeEditModal()">Cancel</button>
                 <button class="btn-primary" type="button" onclick="saveEdit()">Save changes</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="qrModal" role="dialog" aria-modal="true" aria-labelledby="qrModalTitle">
+        <div class="modal-content qr-modal">
+            <div class="modal-header">
+                <h3 id="qrModalTitle">Share via QR code</h3>
+                <button class="close-btn" type="button" onclick="closeQrModal()" aria-label="Close">×</button>
+            </div>
+            <div class="qr-preview">
+                <div class="qr-filename" id="qrFilename"></div>
+                <img id="qrImage" alt="QR code" src="" loading="lazy">
+                <div class="qr-link">
+                    <input type="text" id="qrDownloadLink" readonly>
+                    <button type="button" onclick="copyQrLink()">Copy download link</button>
+                </div>
             </div>
         </div>
     </div>
@@ -635,6 +709,7 @@
                     <td>
                         <div class="actions">
                             <button class="action-btn primary" type="button" onclick="downloadFile('${encodedName}')">Download</button>
+                            <button class="action-btn" type="button" onclick="showQrCode('${encodedName}')">QR code</button>
                             <button class="action-btn" type="button" onclick="editFile('${encodedName}')">Rename / edit</button>
                             <button class="action-btn danger" type="button" onclick="deleteFile('${encodedName}')">Delete</button>
                         </div>
@@ -767,6 +842,50 @@
                 notification.classList.add('hide');
                 setTimeout(() => notification.remove(), 300);
             }, 3200);
+        }
+
+        async function showQrCode(filename) {
+            const decodedName = decodeURIComponent(filename);
+            try {
+                const response = await fetch(`${API_URL}/qr/${filename}`);
+                if (!response.ok) throw new Error('Unable to fetch QR code');
+                const data = await response.json();
+
+                document.getElementById('qrFilename').textContent = decodedName;
+                const qrImage = document.getElementById('qrImage');
+                qrImage.src = data.qrDataUrl;
+                qrImage.alt = `QR code for ${decodedName}`;
+                const linkField = document.getElementById('qrDownloadLink');
+                linkField.value = data.downloadUrl;
+                linkField.focus();
+
+                document.getElementById('qrModal').classList.add('show');
+            } catch (error) {
+                console.error(error);
+                showNotification('Failed to generate QR code', 'error');
+            }
+        }
+
+        function closeQrModal() {
+            document.getElementById('qrModal').classList.remove('show');
+        }
+
+        async function copyQrLink() {
+            const linkField = document.getElementById('qrDownloadLink');
+            const value = linkField.value;
+
+            try {
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    await navigator.clipboard.writeText(value);
+                } else {
+                    linkField.select();
+                    document.execCommand('copy');
+                }
+                showNotification('Download link copied', 'success');
+            } catch (error) {
+                console.error(error);
+                showNotification('Unable to copy link', 'error');
+            }
         }
     </script>
 </body>
