@@ -8,6 +8,7 @@ RUN npm install --production && npm cache clean --force
 
 COPY public ./public
 COPY server.js ./
+COPY utils ./utils
 
 ENV NODE_ENV=production
 ENV PORT=3080
