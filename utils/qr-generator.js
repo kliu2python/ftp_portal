@@ -1,5 +1,7 @@
 'use strict';
 
+const zlib = require('zlib');
+
 const ECC_LEVELS = {
     M: {
         formatBits: 0
@@ -544,6 +546,105 @@ function cloneMatrix(matrix) {
     return matrix.map(row => row.slice());
 }
 
+const PNG_SIGNATURE = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+
+const CRC_TABLE = (() => {
+    const table = new Uint32Array(256);
+    for (let n = 0; n < 256; n++) {
+        let c = n;
+        for (let k = 0; k < 8; k++) {
+            c = (c & 1) ? (0xedb88320 ^ (c >>> 1)) : (c >>> 1);
+        }
+        table[n] = c >>> 0;
+    }
+    return table;
+})();
+
+function crc32(buffer, initial = 0xffffffff) {
+    let c = initial;
+    for (let i = 0; i < buffer.length; i++) {
+        c = CRC_TABLE[(c ^ buffer[i]) & 0xff] ^ (c >>> 8);
+    }
+    return c;
+}
+
+function finalizeCrc(c) {
+    return (c ^ 0xffffffff) >>> 0;
+}
+
+function createChunk(type, data) {
+    const chunk = Buffer.alloc(8 + data.length + 4);
+    chunk.writeUInt32BE(data.length, 0);
+    chunk.write(type, 4, 4, 'ascii');
+    data.copy(chunk, 8);
+    let crc = 0xffffffff;
+    for (let i = 0; i < type.length; i++) {
+        crc = CRC_TABLE[(crc ^ type.charCodeAt(i)) & 0xff] ^ (crc >>> 8);
+    }
+    crc = finalizeCrc(crc32(data, crc));
+    chunk.writeUInt32BE(crc, chunk.length - 4);
+    return chunk;
+}
+
+function createPngData(modules, options = {}) {
+    const margin = options.margin ?? 2;
+    const scale = options.moduleScale ?? 8;
+    const moduleSize = modules.length;
+    const size = moduleSize + margin * 2;
+    const pixelSize = size * scale;
+    const pixels = Buffer.alloc(pixelSize * pixelSize * 4, 0xff);
+
+    for (let y = 0; y < moduleSize; y++) {
+        for (let x = 0; x < moduleSize; x++) {
+            if (!modules[y][x]) {
+                continue;
+            }
+            const startX = (x + margin) * scale;
+            const startY = (y + margin) * scale;
+            for (let yy = 0; yy < scale; yy++) {
+                const row = startY + yy;
+                for (let xx = 0; xx < scale; xx++) {
+                    const col = startX + xx;
+                    const offset = (row * pixelSize + col) * 4;
+                    pixels[offset] = 0x00;
+                    pixels[offset + 1] = 0x00;
+                    pixels[offset + 2] = 0x00;
+                    // alpha remains 0xff
+                }
+            }
+        }
+    }
+
+    const rowSize = pixelSize * 4;
+    const raw = Buffer.alloc((rowSize + 1) * pixelSize);
+    for (let y = 0; y < pixelSize; y++) {
+        const srcStart = y * rowSize;
+        const destStart = y * (rowSize + 1);
+        raw[destStart] = 0; // filter type None
+        pixels.copy(raw, destStart + 1, srcStart, srcStart + rowSize);
+    }
+
+    const ihdr = Buffer.alloc(13);
+    ihdr.writeUInt32BE(pixelSize, 0); // width
+    ihdr.writeUInt32BE(pixelSize, 4); // height
+    ihdr[8] = 8; // bit depth
+    ihdr[9] = 6; // color type RGBA
+    ihdr[10] = 0; // compression
+    ihdr[11] = 0; // filter
+    ihdr[12] = 0; // interlace
+
+    const idatData = zlib.deflateSync(raw);
+
+    const chunks = [
+        PNG_SIGNATURE,
+        createChunk('IHDR', ihdr),
+        createChunk('IDAT', idatData),
+        createChunk('IEND', Buffer.alloc(0))
+    ];
+
+    return Buffer.concat(chunks);
+}
+
 function renderSvg(modules, options = {}) {
     const margin = options.margin ?? 2;
     const scale = options.moduleScale ?? 8;
@@ -564,7 +665,18 @@ function renderSvg(modules, options = {}) {
         `<path d="${path.join('')}" fill="#000000"/>` +
         `</svg>`;
 
-    return `data:image/svg+xml;base64,${Buffer.from(svg).toString('base64')}`;
+    return Buffer.from(svg, 'utf8');
+}
+
+function renderDataUrl(modules, options = {}) {
+    const format = options.format ? String(options.format).toLowerCase() : 'png';
+    if (format === 'svg') {
+        const svgBuffer = renderSvg(modules, options);
+        return `data:image/svg+xml;base64,${svgBuffer.toString('base64')}`;
+    }
+
+    const pngBuffer = createPngData(modules, options);
+    return `data:image/png;base64,${pngBuffer.toString('base64')}`;
 }
 
 function chooseVersion(dataLength) {
@@ -670,7 +782,11 @@ function generateQrDataUrl(text, options = {}) {
     };
 
     const { modules } = buildMatrix(data, versionInfo);
-    return renderSvg(modules, { margin: options.margin, moduleScale: options.moduleScale });
+    return renderDataUrl(modules, {
+        margin: options.margin,
+        moduleScale: options.moduleScale,
+        format: options.format
+    });
 }
 
 module.exports = {
