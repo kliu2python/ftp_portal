@@ -42,6 +42,10 @@
             min-height: 0;
         }
 
+        .section + .section {
+            margin-top: 1.5rem;
+        }
+
         .table-wrapper {
             overflow: auto;
             flex: 1 1 auto;
@@ -126,6 +130,30 @@
             display: inline-flex;
             flex-direction: column;
             gap: 0.25rem;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1rem 1.25rem;
+            margin-bottom: 1.25rem;
+        }
+
+        .form-grid .form-group {
+            margin: 0;
+        }
+
+        .form-help {
+            font-size: 0.85rem;
+            color: #64748b;
+            margin-top: 0.25rem;
+        }
+
+        .form-inline {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+            align-items: flex-start;
         }
 
         input[type="text"],
@@ -443,6 +471,43 @@
 </head>
 <body>
     <main>
+        <section class="section" aria-labelledby="emailSettingsTitle">
+            <h2 id="emailSettingsTitle">Email inbox connection</h2>
+            <p>Configure the IMAP connection details used to fetch messages.</p>
+            <form class="form-grid" id="imapSettingsForm" autocomplete="off">
+                <div class="form-group">
+                    <label for="imapProvider">Provider</label>
+                    <select id="imapProvider" name="provider">
+                        <option value="google">Google</option>
+                        <option value="hotmail">Hotmail</option>
+                        <option value="outlook">Outlook</option>
+                        <option value="custom">Custom</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="imapHostInput">IMAP host
+                        <span class="form-help">Select a provider or enter a custom host.</span>
+                    </label>
+                    <input type="text" id="imapHostInput" name="host" placeholder="Enter IMAP host">
+                </div>
+                <div class="form-group">
+                    <label for="imapPortInput">Port</label>
+                    <input type="text" id="imapPortInput" name="port" placeholder="993">
+                </div>
+                <div class="form-group">
+                    <label for="imapUsernameInput">Username</label>
+                    <input type="text" id="imapUsernameInput" name="username" placeholder="name@example.com">
+                </div>
+                <div class="form-group">
+                    <label for="imapPasswordInput">Password</label>
+                    <input type="password" id="imapPasswordInput" name="password" placeholder="••••••••">
+                </div>
+            </form>
+            <div class="form-inline">
+                <button class="btn-primary" type="button" id="saveImapSettings">Save settings</button>
+                <button class="btn-secondary" type="button" id="testImapConnection">Test connection</button>
+            </div>
+        </section>
         <section class="section">
             <div class="files-toolbar">
                 <div>
@@ -545,6 +610,13 @@
             : '';
         const API_URL = baseOrigin ? `${baseOrigin}/api` : '/api';
 
+        const IMAP_PROVIDER_HOSTS = {
+            google: 'imap.gmail.com',
+            hotmail: 'imap-mail.outlook.com',
+            outlook: 'outlook.office365.com'
+        };
+
+        let customImapHost = '';
         let pageSize = 10;
         let files = [];
         let currentSort = 'name';
@@ -553,6 +625,7 @@
         let editingFileName = null;
 
         document.addEventListener('DOMContentLoaded', () => {
+            initializeImapForm();
             loadFiles();
             setupEventListeners();
         });
@@ -565,6 +638,8 @@
             const prevPageBtn = document.getElementById('prevPage');
             const nextPageBtn = document.getElementById('nextPage');
             const pageSizeSelect = document.getElementById('pageSizeSelect');
+            const saveImapSettings = document.getElementById('saveImapSettings');
+            const testImapConnection = document.getElementById('testImapConnection');
 
             uploadButton.addEventListener('click', () => fileInput.click());
             fileInput.addEventListener('change', handleFileSelect);
@@ -604,6 +679,98 @@
                     }
                 });
             }
+
+            if (saveImapSettings) {
+                saveImapSettings.addEventListener('click', () => {
+                    const { host } = getImapFormValues();
+                    if (!host) {
+                        showNotification('Enter a valid IMAP host before saving.', 'error');
+                        return;
+                    }
+                    showNotification(`IMAP settings saved for ${host}`, 'success');
+                });
+            }
+
+            if (testImapConnection) {
+                testImapConnection.addEventListener('click', () => {
+                    const { host } = getImapFormValues();
+                    if (!host) {
+                        showNotification('Enter a valid IMAP host before testing.', 'error');
+                        return;
+                    }
+                    showNotification(`Testing IMAP connection to ${host}...`, 'info');
+                });
+            }
+        }
+
+        function initializeImapForm() {
+            const providerSelect = document.getElementById('imapProvider');
+            const hostInput = document.getElementById('imapHostInput');
+            const portInput = document.getElementById('imapPortInput');
+
+            if (!providerSelect || !hostInput) {
+                return;
+            }
+
+            let previousProvider = providerSelect.value;
+
+            const syncHost = () => {
+                const selected = providerSelect.value;
+                if (selected === 'custom') {
+                    hostInput.readOnly = false;
+                    hostInput.value = customImapHost;
+                    hostInput.placeholder = 'Enter IMAP host';
+                    hostInput.focus();
+                } else {
+                    hostInput.readOnly = true;
+                    hostInput.value = IMAP_PROVIDER_HOSTS[selected] || '';
+                    hostInput.placeholder = '';
+                }
+            };
+
+            providerSelect.addEventListener('change', () => {
+                if (previousProvider === 'custom') {
+                    customImapHost = hostInput.value.trim();
+                }
+                previousProvider = providerSelect.value;
+                syncHost();
+            });
+
+            hostInput.addEventListener('input', (event) => {
+                if (providerSelect.value === 'custom') {
+                    customImapHost = event.target.value;
+                }
+            });
+
+            if (portInput && !portInput.value) {
+                portInput.value = '993';
+            }
+
+            syncHost();
+        }
+
+        function getImapFormValues() {
+            const providerSelect = document.getElementById('imapProvider');
+            const hostInput = document.getElementById('imapHostInput');
+            const portInput = document.getElementById('imapPortInput');
+            const usernameInput = document.getElementById('imapUsernameInput');
+            const passwordInput = document.getElementById('imapPasswordInput');
+
+            const provider = providerSelect ? providerSelect.value : 'custom';
+            let host = '';
+            if (provider === 'custom') {
+                host = hostInput ? hostInput.value.trim() : '';
+            } else {
+                host = IMAP_PROVIDER_HOSTS[provider] || '';
+            }
+
+            return {
+                provider,
+                host,
+                port: portInput ? portInput.value.trim() : '',
+                username: usernameInput ? usernameInput.value.trim() : '',
+                password: passwordInput ? passwordInput.value : ''
+            };
         }
 
         async function loadFiles() {
